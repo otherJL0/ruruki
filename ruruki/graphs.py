@@ -384,13 +384,15 @@ class Graph(interfaces.IGraph):
                     continue
 
                 for indexed_entity in key_index[key]:
-                    if indexed_entity != vertex:
-                        if indexed_entity.properties[key] == value:
-                            raise interfaces.ConstraintViolation(
-                                "{!r} violated constraint {!r}".format(
-                                    vertex, key
-                                )
+                    if (
+                        indexed_entity != vertex
+                        and indexed_entity.properties[key] == value
+                    ):
+                        raise interfaces.ConstraintViolation(
+                            "{!r} violated constraint {!r}".format(
+                                vertex, key
                             )
+                        )
 
     # todo: add in property constraint violation checks for edges
     def _edge_constraint_violated(self, edge):
@@ -448,9 +450,8 @@ class Graph(interfaces.IGraph):
             elif tail and head is None:
                 if edge.tail == tail:
                     container.add(edge)
-            else:
-                if edge.head == head and edge.tail == tail:
-                    container.add(edge)
+            elif edge.head == head and edge.tail == tail:
+                container.add(edge)
         return container
 
     def get_vertices(self, label=None, **kwargs):
@@ -731,9 +732,11 @@ class PersistentGraph(Graph):
     def add_vertex_constraint(self, label, key):
         super(PersistentGraph, self).add_vertex_constraint(label, key)
         with open(self.vertices_constraints_path, "w") as constraint_fh:
-            data = []
-            for const_label, const_key in self.get_vertex_constraints():
-                data.append({"label": const_label, "key": const_key})
+            data = [
+                {"label": const_label, "key": const_key}
+                for const_label, const_key in self.get_vertex_constraints()
+            ]
+
             json.dump(data, constraint_fh, indent=4)
 
     def add_vertex(self, label=None, **kwargs):
@@ -801,15 +804,8 @@ class PersistentGraph(Graph):
         )
 
         with open(properties_file, "w") as prop_file:
-            json.dump(
-                dict(
-                    (k, v)
-                    for k, v in entity.properties.items()
-                    if k != "_path"
-                ),
-                prop_file,
-                indent=4
-            )
+            json.dump({k: v for k, v in entity.properties.items()
+                            if k != "_path"}, prop_file, indent=4)
 
     def remove_edge(self, edge):
         super(PersistentGraph, self).remove_edge(edge)

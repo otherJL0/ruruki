@@ -512,8 +512,7 @@ def case(context, ex, alt, el):
     for when_, then_ in alt:
         wv = cypher_eval(when_, context)
         if v == wv:
-            tv = cypher_eval(then_, context)
-            return tv
+            return cypher_eval(then_, context)
     return cypher_eval(el, context)
 
 

@@ -502,13 +502,15 @@ class EntitySet(interfaces.IEntitySet):
             collection.setdefault(key, set()).add(entity)
 
     def add(self, entity):
-        if entity.ident in self._id_reference:
-            if entity != self._id_reference[entity.ident]:
-                raise KeyError(
-                    "Conflict: {0} (current) <-> {1} (conflict)".format(
-                        self._id_reference[entity.ident], entity
-                    )
+        if (
+            entity.ident in self._id_reference
+            and entity != self._id_reference[entity.ident]
+        ):
+            raise KeyError(
+                "Conflict: {0} (current) <-> {1} (conflict)".format(
+                    self._id_reference[entity.ident], entity
                 )
+            )
 
         # Add in a reference for fast id search.
         self._id_reference[entity.ident] = entity
@@ -539,9 +541,8 @@ class EntitySet(interfaces.IEntitySet):
         if label is None and not kwargs:
             return self
 
-        if label and not kwargs:
-            if label in self._prop_reference:
-                return EntitySet(entities=self._prop_reference[label]["_all"])
+        if label and not kwargs and label in self._prop_reference:
+            return EntitySet(entities=self._prop_reference[label]["_all"])
 
         keys_values = kwargs.items()
         get_func = OPERATORS.get
@@ -574,14 +575,14 @@ class EntitySet(interfaces.IEntitySet):
                 if prop_value is None:
                     mismatch = True
                     break
-                if not func:
-                    if prop_value != value:
-                        mismatch = True
-                        break
-                elif not func(prop_value, value, icase):
+                if (
+                    not func
+                    and prop_value != value
+                    or func
+                    and not func(prop_value, value, icase)
+                ):
                     mismatch = True
                     break
-
             if not mismatch:
                 container.add(entity)
 

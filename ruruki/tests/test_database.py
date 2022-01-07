@@ -1069,9 +1069,8 @@ class TestPersistentGraph(unittest.TestCase):
     def test_import_from_path_missing_edges_directory(self):
         path = tempfile.mkdtemp()
         os.makedirs(os.path.join(path, "vertices"))
-        fh = open(os.path.join(path, "vertices", "constraints.json"), "w")
-        fh.write("{}")
-        fh.close()
+        with open(os.path.join(path, "vertices", "constraints.json"), "w") as fh:
+            fh.write("{}")
         self.assertRaises(
             OSError,
             PersistentGraph,
